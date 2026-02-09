@@ -32,6 +32,10 @@ public class OptionalOnlinePlayer {
         return Bukkit.getOfflinePlayer(this.playerUUID);
     }
 
+    public String getName() {
+        return Optional.ofNullable(getOffline().getName()).orElse("Unknown");
+    }
+
     public Player get() {
         return Bukkit.getPlayer(this.playerUUID);
     }

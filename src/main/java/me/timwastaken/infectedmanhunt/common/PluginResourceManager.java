@@ -1,5 +1,6 @@
 package me.timwastaken.infectedmanhunt.common;
 
+import me.timwastaken.infectedmanhunt.Game;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.event.HandlerList;
@@ -14,6 +15,7 @@ import java.util.Optional;
 public class PluginResourceManager {
     private final JavaPlugin plugin;
     private final List<Integer> taskIds;
+    private Game activeGame;
 
     public PluginResourceManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -56,8 +58,20 @@ public class PluginResourceManager {
         }
     }
 
+    public void destroyGame() {
+        if (activeGame != null) activeGame.destroy();
+    }
+
     public void registerCommand(String commandName, CommandExecutor executor) {
         Optional.ofNullable(this.plugin.getCommand(commandName))
                 .ifPresent(command -> command.setExecutor(executor));
+    }
+
+    public Game getActiveGame() {
+        return activeGame;
+    }
+
+    public void setActiveGame(Game game) {
+        activeGame = game;
     }
 }
