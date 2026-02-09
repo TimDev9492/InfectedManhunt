@@ -1,5 +1,5 @@
-name: MinecraftPluginTemplate
-main: me.author.minecraftPluginTemplate.MinecraftPluginTemplate
+name: InfectedManhunt
+main: me.timwastaken.infectedmanhunt.InfectedManhunt
 
 # This is the plugin's internal versioning (independent of minecraft)
 version: '0.1.0'

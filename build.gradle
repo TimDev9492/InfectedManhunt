@@ -15,7 +15,7 @@ plugins {
 def pluginYml = new Yaml().load(new File('src/main/resources/plugin.yml').newInputStream())
 def jarFilename = String.format('%s-%s+%s.jar', pluginYml.name, pluginYml.version, pluginYml['compiled-version'])
 
-group = 'me.author'
+group = 'me.timwastaken'
 version = pluginYml.version
 
 repositories {

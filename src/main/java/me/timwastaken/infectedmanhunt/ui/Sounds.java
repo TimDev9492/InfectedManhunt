@@ -1,6 +1,6 @@
-package me.author.minecraftPluginTemplate.ui;
+package me.timwastaken.infectedmanhunt.ui;
 
-import me.author.minecraftPluginTemplate.common.OptionalOnlinePlayer;
+import me.timwastaken.infectedmanhunt.common.OptionalOnlinePlayer;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 

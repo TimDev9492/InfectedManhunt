@@ -1,4 +1,4 @@
-package me.author.minecraftPluginTemplate.common;
+package me.timwastaken.infectedmanhunt.common;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;

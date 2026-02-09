@@ -1,9 +1,9 @@
-package me.author.minecraftPluginTemplate;
+package me.timwastaken.infectedmanhunt;
 
-import me.author.minecraftPluginTemplate.common.PluginResourceManager;
+import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class MinecraftPluginTemplate extends JavaPlugin {
+public final class InfectedManhunt extends JavaPlugin {
     private PluginResourceManager resourceManager;
 
     @Override
