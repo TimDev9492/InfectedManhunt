@@ -9,7 +9,7 @@ buildscript {
 plugins {
     id 'java'
     // SHADING: uncomment this line and add 'gradleup_shadow_version=<version>' to gradle.properties
-    // id 'com.gradleup.shadow' version "$gradleup_shadow_version"
+     id 'com.gradleup.shadow' version "$gradleup_shadow_version"
 }
 
 def pluginYml = new Yaml().load(new File('src/main/resources/plugin.yml').newInputStream())
@@ -24,10 +24,15 @@ repositories {
         name = "spigotmc-repo"
         url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
     }
+    maven {
+        name = "panda-repository"
+        url = "https://repo.panda-lang.org/releases"
+    }
 }
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:${pluginYml['compiled-version']}-R0.1-SNAPSHOT")
+    implementation("dev.rollczi:litecommands-bukkit:${litecommands_version}")
 }
 
 def targetJavaVersion = 21
@@ -44,17 +49,21 @@ java {
 tasks.jar {
     archiveFileName.set(jarFilename)
     // SHADING: uncomment this line
-    // enabled = false
+     enabled = false
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("-parameters")
 }
 
 // SHADING: uncomment this section
-//tasks.shadowJar {
-//    archiveName.set(jarFilename)
-//
-//    [
-//            // add package names to shade here
-//    ].each { pkg -> relocate(pkg, "${group}.lib.$pkg") }
-//}
+tasks.shadowJar {
+    archiveFileName.set(jarFilename)
+
+    [
+            // add package names to shade here
+    ].each { pkg -> relocate(pkg, "${group}.lib.$pkg") }
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
