@@ -1,0 +1,17 @@
+name: MinecraftPluginTemplate
+main: me.author.minecraftPluginTemplate.MinecraftPluginTemplate
+
+# This is the plugin's internal versioning (independent of minecraft)
+version: '0.1.0'
+# Based on this versions, the server decides if the plugin is
+# compatible with the versions it is running
+api-version: '1.21'
+# The spigot api version this plugin gets compiled against
+# (also displayed as the minimum version in the output jar filename)
+compiled-version: '1.21.11'
+
+# Select which fields of this yml get printed to STDOUT using the printMetadata Task
+expose:
+  - version
+  - api-version
+  - compiled-version

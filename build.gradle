@@ -1,0 +1,101 @@
+import org.yaml.snakeyaml.Yaml
+
+buildscript {
+    dependencies {
+        classpath("org.yaml:snakeyaml:$snakeyaml_version")
+    }
+}
+
+plugins {
+    id 'java'
+    // SHADING: uncomment this line and add 'gradleup_shadow_version=<version>' to gradle.properties
+    // id 'com.gradleup.shadow' version "$gradleup_shadow_version"
+}
+
+def pluginYml = new Yaml().load(new File('src/main/resources/plugin.yml').newInputStream())
+def jarFilename = String.format('%s-%s+%s.jar', pluginYml.name, pluginYml.version, pluginYml['compiled-version'])
+
+group = 'me.author'
+version = pluginYml.version
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "spigotmc-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+}
+
+dependencies {
+    compileOnly("org.spigotmc:spigot-api:${pluginYml['compiled-version']}-R0.1-SNAPSHOT")
+}
+
+def targetJavaVersion = 21
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+// Set the output jar file name accordingly
+tasks.jar {
+    archiveFileName.set(jarFilename)
+    // SHADING: uncomment this line
+    // enabled = false
+}
+
+// SHADING: uncomment this section
+//tasks.shadowJar {
+//    archiveName.set(jarFilename)
+//
+//    [
+//            // add package names to shade here
+//    ].each { pkg -> relocate(pkg, "${group}.lib.$pkg") }
+//}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+tasks.register('deploy', Exec) {
+    commandLine = ["./deploy.sh", "build/libs/$jarFilename"]
+}
+
+tasks.register('cleanBuildDeploy', GradleBuild) {
+    tasks = ['clean', 'build', 'deploy']
+}
+
+tasks.register('metadata') {
+    doLast{
+        def prefix = "plugin"
+
+        println "${prefix}_filename=$jarFilename"
+
+        if (pluginYml.expose != null && pluginYml.expose instanceof List) {
+            pluginYml.expose.each { key ->
+                def value = pluginYml.get(key)
+                if (value != null) {
+                    def safeKey = key
+                        .replaceAll(/[^a-zA-Z0-9_]/, "_")   // replace invalid chars
+                    println "${prefix}_${safeKey}=${value}"
+                }
+            }
+        }
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
