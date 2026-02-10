@@ -21,11 +21,12 @@ public class GameCommand {
 
     @Execute(name = "start")
     public void execute(@Context Player player) {
-        if (resourceManager.getActiveGame() != null) {
+        if (resourceManager.hasGameStarted()) {
             Notifications.errorGameIsRunning(player);
             return;
         }
         Game.Builder builder = new Game.Builder(resourceManager)
+                .setWorld(player.getWorld())
                 .setTrackingStrategy(new PortalEntranceTrackingStrategy())
                 .setHunters(OptionalOnlinePlayer.of(player));
         for (Player online : Bukkit.getOnlinePlayers()) {

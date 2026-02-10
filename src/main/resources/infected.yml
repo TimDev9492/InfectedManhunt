@@ -1,0 +1,8 @@
+preset_description: The default manhunt experience
+
+infect_runners: true
+runner_keep_inv: false
+hunter_keep_inv: false
+runner_lives: 100
+win_condition: kill_ender_dragon
+runner_headstart: 0

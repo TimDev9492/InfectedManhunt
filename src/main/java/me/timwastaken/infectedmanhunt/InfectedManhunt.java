@@ -2,11 +2,12 @@ package me.timwastaken.infectedmanhunt;
 
 import dev.rollczi.litecommands.LiteCommands;
 import dev.rollczi.litecommands.bukkit.LiteBukkitFactory;
-import me.timwastaken.infectedmanhunt.commands.GameCommand;
-import me.timwastaken.infectedmanhunt.commands.TrackerCommand;
-import me.timwastaken.infectedmanhunt.commands.UsageHandler;
+import me.timwastaken.infectedmanhunt.commands.*;
 import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
+import me.timwastaken.infectedmanhunt.serialization.ConfigUtils;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class InfectedManhunt extends JavaPlugin {
@@ -14,18 +15,26 @@ public final class InfectedManhunt extends JavaPlugin {
 
     private PluginResourceManager resourceManager;
     private LiteCommands<CommandSender> liteCommands;
+    private ConfigUtils presetLoader;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         self = this;
         resourceManager = new PluginResourceManager(this);
+        presetLoader = new ConfigUtils(this);
 
         liteCommands = LiteBukkitFactory.builder(this)
                 .commands(
                         new GameCommand(resourceManager),
-                        new TrackerCommand(resourceManager)
-                ).invalidUsage(new UsageHandler()).build();
+                        new TrackerCommand(resourceManager),
+                        new ConfigureGameCommand(new Game.Builder(resourceManager), presetLoader)
+                )
+                .invalidUsage(new UsageHandler())
+                .argument(ConfigurationSection.class, new PresetArgument(presetLoader))
+                .build();
+
+        saveResource("default.yml", true);
     }
 
     @Override

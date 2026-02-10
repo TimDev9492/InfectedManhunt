@@ -62,6 +62,7 @@ tasks.shadowJar {
 
     [
             // add package names to shade here
+            'dev.rollczi.litecommands',
     ].each { pkg -> relocate(pkg, "${group}.lib.$pkg") }
 }
 

@@ -67,11 +67,15 @@ public class PluginResourceManager {
                 .ifPresent(command -> command.setExecutor(executor));
     }
 
-    public Game getActiveGame() {
-        return activeGame;
+    public boolean hasGameStarted() {
+        return activeGame != null && activeGame.isStarted();
     }
 
     public void setActiveGame(Game game) {
         activeGame = game;
+    }
+
+    public Game getActiveGame() {
+        return activeGame;
     }
 }

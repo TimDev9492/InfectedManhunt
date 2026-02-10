@@ -1,11 +1,15 @@
 package me.timwastaken.infectedmanhunt.ui;
 
 import me.timwastaken.infectedmanhunt.common.OptionalOnlinePlayer;
+import me.timwastaken.infectedmanhunt.gamelogic.settings.GameSetting;
+import me.timwastaken.infectedmanhunt.gamelogic.settings.SettingsRegistry;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
 
 public class Notifications {
     private static final String PREFIX = String.format(
@@ -63,17 +67,17 @@ public class Notifications {
     }
 
     public static String getRunnerTeamName() {
-        return String.format("%s%sRunners", ChatColor.BLUE, ChatColor.BOLD);
+        return String.format("%s%sRunners", ChatColor.GREEN, ChatColor.BOLD);
     }
 
     public static ChatColor getRunnerTeamColor() {
-        return ChatColor.BLUE;
+        return ChatColor.GREEN;
     }
 
     public static String getRunnerTeamPrefix() {
         return String.format(
                 "%s%sRunner %s| ",
-                ChatColor.DARK_BLUE,
+                ChatColor.DARK_GREEN,
                 ChatColor.BOLD,
                 ChatColor.GRAY
         );
@@ -153,5 +157,114 @@ public class Notifications {
                     10, 80, 10
             ));
         }
+    }
+
+    public static void announceGameStart(Iterable<OptionalOnlinePlayer> targets) {
+        for (OptionalOnlinePlayer target : targets) {
+            target.run(player -> {
+                player.sendTitle(
+                        String.format("%s%sGo!", ChatColor.GREEN, ChatColor.BOLD),
+                        String.format("%sThe game started", ChatColor.GRAY),
+                        0, 80, 20
+                );
+                player.sendMessage(withPrefix(String.format(
+                        "%sThe game started!",
+                        ChatColor.GREEN
+                )));
+            });
+        }
+    }
+
+    public static void announceRunnerHeadstart(Iterable<OptionalOnlinePlayer> targets, int headstartSeconds) {
+        for (OptionalOnlinePlayer target : targets) {
+            target.run(player -> player.sendMessage(withPrefix(String.format(
+                    "%s%sHunters %s%sget released in %s%d %sseconds",
+                    ChatColor.DARK_RED,
+                    ChatColor.BOLD,
+                    ChatColor.RESET,
+                    ChatColor.GRAY,
+                    ChatColor.YELLOW,
+                    headstartSeconds,
+                    ChatColor.GRAY
+            ))));
+        }
+    }
+
+    public static void announceHunterRelease(Iterable<OptionalOnlinePlayer> targets) {
+        for (OptionalOnlinePlayer target : targets) {
+            target.run(player -> player.sendMessage(withPrefix(String.format(
+                    "%s%sHunters %s%shave been released",
+                    ChatColor.DARK_RED,
+                    ChatColor.BOLD,
+                    ChatColor.RESET,
+                    ChatColor.GRAY
+            ))));
+        }
+    }
+
+    public static String getListHeader() {
+        return String.format(
+                "%s%sInfected%s%sManhunt",
+                ChatColor.DARK_AQUA,
+                ChatColor.BOLD,
+                ChatColor.AQUA,
+                ChatColor.BOLD
+        );
+    }
+
+    public static String getListFooter(long elapsedSeconds) {
+        return String.format(
+                "%s%sElasped time: %s%s%s",
+                ChatColor.ITALIC,
+                ChatColor.GRAY,
+                ChatColor.RESET,
+                ChatColor.YELLOW,
+                formatSecondsHuman(elapsedSeconds, true)
+        );
+    }
+
+    private static String formatSecondsHuman(long totalSeconds, boolean includeSeconds) {
+        long h = totalSeconds / 3600;
+        long m = (totalSeconds % 3600) / 60;
+        long s = totalSeconds % 60;
+
+        StringBuilder sb = new StringBuilder();
+        boolean printRest = false;
+        if (h > 0) {
+            sb.append(h).append("h ");
+            printRest = true;
+        }
+        if (m > 0 || !includeSeconds || printRest) {
+            sb.append(m).append("m ");
+        }
+        if (includeSeconds) sb.append(s).append("s");
+        return sb.toString();
+    }
+
+    public static void listGameSettings(CommandSender target, SettingsRegistry settings) {
+        target.sendMessage(withPrefix(String.format("%sCurrent game settings:", ChatColor.GREEN)));
+        for (GameSetting<?> gameSetting : GameSetting.all()) {
+            target.sendMessage(String.format(
+                    "  %s%s: %s%s%s",
+                    ChatColor.YELLOW,
+                    gameSetting.identifier(),
+                    ChatColor.GRAY,
+                    ChatColor.ITALIC,
+                    settings.get(gameSetting).toString()
+            ));
+        }
+    }
+
+    public static void sendPresetsReloaded(CommandSender target) {
+        target.sendMessage(withPrefix(String.format("%sSuccessfully reloaded all settings presets", ChatColor.GREEN)));
+    }
+
+    public static void sendPresetLoaded(CommandSender sender, String presetDescription) {
+        sender.sendMessage(withPrefix(String.format(
+                "%sLoaded preset: %s%s",
+                ChatColor.GREEN,
+                ChatColor.GRAY,
+                presetDescription
+        )));
     }
 }

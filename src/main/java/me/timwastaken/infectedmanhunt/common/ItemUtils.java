@@ -5,6 +5,7 @@ import me.timwastaken.infectedmanhunt.exceptions.ItemBuildException;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class ItemUtils {
     private ItemUtils() {}
@@ -52,6 +54,13 @@ public class ItemUtils {
         if (meta == null) return;
         meta.setDisplayName(displayName);
         item.setItemMeta(meta);
+    }
+
+    public static void removeIf(Inventory inv, Predicate<ItemStack> condition) {
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack item = inv.getItem(i);
+            if (item != null && condition.test(item)) inv.clear(i);
+        }
     }
 
     public static class Builder {

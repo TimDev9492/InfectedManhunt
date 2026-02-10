@@ -19,11 +19,10 @@ public class TrackerCommand {
 
     @Execute
     public void execute(@Context Player player) {
-        Game game = resourceManager.getActiveGame();
-        if (game == null) {
+        if (!resourceManager.hasGameStarted()) {
             Notifications.errorChat(player, "The game is not running. Start a game with /game start");
             return;
         }
-        game.giveTrackerTo(OptionalOnlinePlayer.of(player));
+        resourceManager.getActiveGame().giveTrackerTo(OptionalOnlinePlayer.of(player));
     }
 }

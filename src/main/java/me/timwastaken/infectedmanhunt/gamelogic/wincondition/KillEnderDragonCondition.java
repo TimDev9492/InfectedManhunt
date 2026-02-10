@@ -1,6 +1,5 @@
-package me.timwastaken.infectedmanhunt.gamelogic.tracking;
+package me.timwastaken.infectedmanhunt.gamelogic.wincondition;
 
-import me.timwastaken.infectedmanhunt.gamelogic.WinCondition;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDeathEvent;

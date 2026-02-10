@@ -15,9 +15,11 @@ public class LazyPlayerTrackingStrategy implements IPlayerTrackingStrategy {
         );
         CompassMeta meta = request.trackerMeta();
         meta.setDisplayName(String.format(
-                "%sTracking %s%s",
+                "%s%sTracking %s%s%s",
                 ChatColor.GRAY,
-                ChatColor.GREEN,
+                ChatColor.BOLD,
+                ChatColor.LIGHT_PURPLE,
+                ChatColor.BOLD,
                 request.target().getName()
         ));
         if (!request.target().isOnline()) {
@@ -51,9 +53,11 @@ public class LazyPlayerTrackingStrategy implements IPlayerTrackingStrategy {
         return new TrackingResult(
                 true,
                 String.format(
-                        "%sPointing towards %s%s",
+                        "%s%sPointing towards %s%s%s",
                         ChatColor.GRAY,
+                        ChatColor.ITALIC,
                         ChatColor.GREEN,
+                        ChatColor.ITALIC,
                         request.target().getName()
                 ),
                 meta
