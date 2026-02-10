@@ -1,6 +1,8 @@
 name: InfectedManhunt
 main: me.timwastaken.infectedmanhunt.InfectedManhunt
 
+depend: [IntertoryAPI]
+
 # This is the plugin's internal versioning (independent of minecraft)
 version: '0.1.0'
 # Based on this versions, the server decides if the plugin is

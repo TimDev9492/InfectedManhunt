@@ -423,10 +423,26 @@ public class Game implements Listener {
             return this;
         }
 
+        public Builder setHunters(Collection<OptionalOnlinePlayer> players) {
+            for (OptionalOnlinePlayer player : players) {
+                runners.remove(player);
+                hunters.add(player);
+            }
+            return this;
+        }
+
         public Builder setHunters(OptionalOnlinePlayer... players) {
             for (OptionalOnlinePlayer player : players) {
                 runners.remove(player);
                 hunters.add(player);
+            }
+            return this;
+        }
+
+        public Builder setRunners(Collection<OptionalOnlinePlayer> players) {
+            for (OptionalOnlinePlayer player : players) {
+                hunters.remove(player);
+                runners.add(player);
             }
             return this;
         }

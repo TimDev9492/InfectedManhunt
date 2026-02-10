@@ -28,10 +28,15 @@ repositories {
         name = "panda-repository"
         url = "https://repo.panda-lang.org/releases"
     }
+    maven {
+        name = "jitpack-repo"
+        url 'https://jitpack.io'
+    }
 }
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:${pluginYml['compiled-version']}-R0.1-SNAPSHOT")
+    compileOnly("com.github.TimDev9492:IntertoryAPI:1.21")
     implementation("dev.rollczi:litecommands-bukkit:${litecommands_version}")
 }
 

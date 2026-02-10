@@ -24,7 +24,6 @@ public class Utils {
                 Location current = centered.clone().add(x, 0, z);
                 if (x == 0 && z == 0) {
                     world.getBlockAt(current).setType(dot);
-                    System.out.println("Placing dot at " + current.toString());
                 } else if (current.distanceSquared(centered) <= radius * radius) {
                     world.getBlockAt(current).setType(fill);
                 }
