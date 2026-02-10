@@ -36,7 +36,7 @@ public enum Sounds {
         player.run(p -> p.playSound(p.getLocation(), this.minecraftSound, this.volume, this.pitch));
     }
 
-    public void playTo(Collection<OptionalOnlinePlayer> players) {
+    public void playTo(Iterable<OptionalOnlinePlayer> players) {
         for (OptionalOnlinePlayer player : players) {
             this.playTo(player);
         }

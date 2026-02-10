@@ -6,7 +6,6 @@ import dev.rollczi.litecommands.annotations.execute.Execute;
 import me.timwastaken.infectedmanhunt.Game;
 import me.timwastaken.infectedmanhunt.common.OptionalOnlinePlayer;
 import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
-import me.timwastaken.infectedmanhunt.gamelogic.tracking.ContinuousTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.PortalEntranceTrackingStrategy;
 import me.timwastaken.infectedmanhunt.ui.Notifications;
 import org.bukkit.Bukkit;
@@ -28,7 +27,7 @@ public class GameCommand {
         }
         Game.Builder builder = new Game.Builder(resourceManager)
                 .setTrackingStrategy(new PortalEntranceTrackingStrategy())
-                .setInfected(OptionalOnlinePlayer.of(player));
+                .setHunters(OptionalOnlinePlayer.of(player));
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (!online.equals(player)) builder.setRunners(OptionalOnlinePlayer.of(online));
         }
