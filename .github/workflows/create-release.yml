@@ -1,7 +1,13 @@
 name: Create release
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - 'release/**'
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   create_release:
@@ -18,7 +24,9 @@ jobs:
           java-version: 21
       - name: Set variables
         run: |
-          ./gradlew metadata -q >> $GITHUB_ENV
+          ./gradlew metadata -q 2>/dev/null | grep -E '^[A-Za-z_]+=.+' | while read -r line; do
+            echo "$line" >> $GITHUB_ENV
+          done
       - name: Build plugin
         run: ./gradlew build
       - name: Create github release
