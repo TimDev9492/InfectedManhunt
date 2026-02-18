@@ -30,15 +30,12 @@ public class LazyPlayerTrackingStrategy implements IPlayerTrackingStrategy {
                             ChatColor.DARK_RED,
                             request.target().getName(),
                             ChatColor.RED
-                    ),
-                    null
+                    )
             );
         }
         Location trackingLocation = request.tracking().get().getLocation();
         Location targetLocation = trackPlayer(trackingLocation, request.target().get());
-        meta.setLodestone(targetLocation);
-        request.metaUpdater().accept(meta);
-        if (!Objects.equals(trackingLocation.getWorld(), request.target().get().getLocation().getWorld())) {
+        if (targetLocation == null) {
             return new TrackingResult(
                     false,
                     String.format(
@@ -46,27 +43,24 @@ public class LazyPlayerTrackingStrategy implements IPlayerTrackingStrategy {
                             ChatColor.DARK_RED,
                             request.target().getName(),
                             ChatColor.RED
-                    ),
-                    meta
+                    )
             );
         }
+        meta.setLodestone(targetLocation);
+        request.metaUpdater().accept(meta);
         return new TrackingResult(
                 true,
                 String.format(
-                        "%s%sPointing towards %s%s%s",
-                        ChatColor.GRAY,
-                        ChatColor.ITALIC,
+                        "%s%sTracker updated",
                         ChatColor.GREEN,
-                        ChatColor.ITALIC,
-                        request.target().getName()
-                ),
-                meta
+                        ChatColor.ITALIC
+                )
         );
     }
 
     protected Location trackPlayer(Location from, Player target) {
         Location targetPlayerLocation = target.getLocation();
-        if (Objects.equals(from.getWorld(), targetPlayerLocation.getWorld())) return null;
+        if (!Objects.equals(from.getWorld(), targetPlayerLocation.getWorld())) return null;
         return targetPlayerLocation.clone();
     }
 }

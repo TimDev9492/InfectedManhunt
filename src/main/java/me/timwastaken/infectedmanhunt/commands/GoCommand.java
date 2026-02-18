@@ -8,6 +8,7 @@ import me.timwastaken.infectedmanhunt.common.OptionalOnlinePlayer;
 import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
 import me.timwastaken.infectedmanhunt.gamelogic.settings.GameSetting;
 import me.timwastaken.infectedmanhunt.gamelogic.settings.SettingsRegistry;
+import me.timwastaken.infectedmanhunt.gamelogic.tracking.ContinuousTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.IPlayerTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.LazyPlayerTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.PortalEntranceTrackingStrategy;
@@ -27,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Command(name = "go")
@@ -87,20 +89,24 @@ public class GoCommand {
                 5,
                 30
         );
-        List<IPlayerTrackingStrategy> trackingStrategies = List.of(
-                new LazyPlayerTrackingStrategy(),
-                new PortalEntranceTrackingStrategy()
+        List<Supplier<IPlayerTrackingStrategy>> trackingStrategies = List.of(
+                LazyPlayerTrackingStrategy::new,
+                PortalEntranceTrackingStrategy::new,
+                () -> new ContinuousTrackingStrategy(resourceManager, new PortalEntranceTrackingStrategy())
         );
         CycleItem trackingStrategy = new CycleItem(
-                2,
-                List.of(Material.COMPASS, Material.RECOVERY_COMPASS),
+                3,
+                List.of(Material.COMPASS, Material.RECOVERY_COMPASS, Material.CALIBRATED_SCULK_SENSOR),
                 String.format("%s%sTracker Behavior", ChatColor.BLUE, ChatColor.BOLD),
                 List.of(
                         "Simple: the tracker updates to the location of the runner when right clicked, but "
                             + "ONLY if the runner and hunter are in the same dimension. Otherwise, the tracking fails.",
                         "Advanced: when right clicked, the tracker updates to either the last location of the "
                             + "runner, if they are in the same dimension, or to the last known location (probably a "
-                            + "portal) of the runner."
+                            + "portal) of the runner.",
+                        "Auto-Update: the tracker continuously updates to always point to the location of the runner, "
+                            + "if they are in the same dimension, or to the last known location (probably a portal) "
+                            + "of the runner."
                 )
         );
         Items.Button cancelButton = new Items.Button(
@@ -178,7 +184,7 @@ public class GoCommand {
                     registry.set(GameSetting.RUNNER_LIVES, runnerLives.getState());
                     registry.set(GameSetting.RUNNER_WIN_CONDITION, conditions.get(winCondition.getState()));
                     registry.set(GameSetting.RUNNER_HEADSTART_SECONDS, headstartSeconds.getValue());
-                    builder.setTrackingStrategy(trackingStrategies.get(trackingStrategy.getState()));
+                    builder.setTrackingStrategy(trackingStrategies.get(trackingStrategy.getState()).get());
                     builder.setWorld(player.getWorld());
                     builder.setSettings(registry);
                     Set<OptionalOnlinePlayer> hunters = Bukkit.getOnlinePlayers()

@@ -2,12 +2,16 @@ package me.timwastaken.infectedmanhunt;
 
 import dev.rollczi.litecommands.LiteCommands;
 import dev.rollczi.litecommands.bukkit.LiteBukkitFactory;
-import me.timwastaken.infectedmanhunt.commands.*;
+import me.timwastaken.infectedmanhunt.commands.ConfigureGameCommand;
+import me.timwastaken.infectedmanhunt.commands.GameCommand;
+import me.timwastaken.infectedmanhunt.commands.GoCommand;
+import me.timwastaken.infectedmanhunt.commands.PresetArgument;
+import me.timwastaken.infectedmanhunt.commands.TrackerCommand;
+import me.timwastaken.infectedmanhunt.commands.UsageHandler;
 import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
 import me.timwastaken.infectedmanhunt.serialization.ConfigUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class InfectedManhunt extends JavaPlugin {
