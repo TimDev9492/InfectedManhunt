@@ -20,8 +20,35 @@ public class Notifications {
         sendTrackingNotification(target, asError(error));
     }
 
+    public static void sendTeammateTrackingError(OptionalOnlinePlayer target, String error) {
+        sendTrackingNotification(target, asError(error));
+    }
+
+    public static void sendTeammateTrackingStatus(
+            OptionalOnlinePlayer isTracking,
+            String beingTracked,
+            boolean isRunner,
+            double distance
+    ) {
+        sendTrackingNotification(isTracking, String.format(
+                "%sNearest teammate: %s%s%s%s   %sDistance: %s%.1fm",
+                ChatColor.GRAY,
+                isRunner ? getRunnerTeamColor() : getHunterTeamColor(),
+                ChatColor.ITALIC,
+                beingTracked,
+                ChatColor.RESET,
+                ChatColor.GRAY,
+                ChatColor.GREEN,
+                distance
+        ));
+    }
+
     public static String getTrackerDisplayName() {
         return String.format("%s%sTracker", ChatColor.DARK_PURPLE, ChatColor.BOLD);
+    }
+
+    public static String getTeamTrackerDisplayName() {
+        return String.format("%s%sTeam Tracker", ChatColor.GOLD, ChatColor.BOLD);
     }
 
     public static void errorChat(CommandSender target, String error) {

@@ -22,8 +22,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.damage.DamageSource;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -61,6 +59,14 @@ public class Game implements Listener {
             .appendLore("Left click - Update tracker")
             .appendLore("Right click - Track next runner")
             .build();
+    private static final String TEAM_TRACKER_TAG = "team_tracker";
+    private static final ItemStack TEAM_TRACKER_ITEM = new ItemUtils.Builder(Material.CLOCK)
+            .withDisplayName(Notifications.getTeamTrackerDisplayName())
+            .addMetaTransform(itemMeta -> itemMeta.setEnchantmentGlintOverride(true))
+            .withTag(TEAM_TRACKER_TAG)
+            .appendLore("Hold this item for tracking your teammates.")
+            .appendLore("Right click - Track next teammate")
+            .build();
 
     private final ItemStack IRON_INGOT = new ItemStack(Material.IRON_INGOT, 1);
     private final ItemStack GOLD_INGOT = new ItemStack(Material.GOLD_INGOT, 1);
@@ -93,8 +99,9 @@ public class Game implements Listener {
     private final PluginResourceManager resourceManager;
     private final IPlayerTrackingStrategy trackingStrategy;
     private final Map<OptionalOnlinePlayer, Integer> runnerTrackingIndexes;
+    private final Map<OptionalOnlinePlayer, Integer> teammateTrackingIndexes;
 
-    private final Set<OptionalOnlinePlayer> hunters;
+    private final List<OptionalOnlinePlayer> hunters;
     private final List<OptionalOnlinePlayer> runners;
 
     private final Scoreboard gameScoreboard;
@@ -116,10 +123,11 @@ public class Game implements Listener {
     ) {
         this.gameSettings = gameSettings;
         this.resourceManager = resourceManager;
-        this.hunters = new HashSet<>(hunters);
+        this.hunters = new ArrayList<>(hunters);
         this.runners = new ArrayList<>(runners);
         this.trackingStrategy = trackingStrategy;
         this.runnerTrackingIndexes = new HashMap<>();
+        this.teammateTrackingIndexes = new HashMap<>();
         this.receivedFirstFallDamage = new HashSet<>();
 
         this.gameScoreboard = Optional.ofNullable(Bukkit.getScoreboardManager()).orElseThrow(
@@ -159,6 +167,8 @@ public class Game implements Listener {
                     p.setHealth(maxHealthValue);
                 }
             });
+            giveTeamTrackerTo(participant);
+            advanceTrackedTeammate(participant);
             if (isHunter(participant)) {
                 hunterTeam.addEntry(participant.getName());
                 advanceTrackedRunner(participant);
@@ -237,6 +247,48 @@ public class Game implements Listener {
                 }
             }
         }, 0L, 20L);
+
+        resourceManager.runTaskTimer(new BukkitRunnable() {
+            @Override
+            public void run() {
+                sendTeammateTrackingUpdates();
+            }
+        }, 0L, 1L);
+    }
+
+    private void sendTeammateTrackingUpdates() {
+        for (OptionalOnlinePlayer runner : runners) {
+            sendTeammateTrackingUpdate(runner, runners, true);
+        }
+        for (OptionalOnlinePlayer hunter : hunters) {
+            sendTeammateTrackingUpdate(hunter, hunters, false);
+        }
+    }
+
+    private void sendTeammateTrackingUpdate(OptionalOnlinePlayer tracking, List<OptionalOnlinePlayer> teammates, boolean isRunner) {
+        if (!tracking.isOnline()) return;
+        Player trackingPlayer = tracking.get();
+        if (!ItemUtils.containsTag(trackingPlayer.getInventory().getItemInMainHand(), TEAM_TRACKER_TAG)) return;
+        Integer teammateIndex = teammateTrackingIndexes.get(tracking);
+
+        if (teammateIndex == null || teammateIndex < 0 || teammateIndex >= teammates.size()) {
+            Notifications.sendTeammateTrackingError(tracking, "Error tracking teammate! Right click to calibrate!");
+            return;
+        }
+        OptionalOnlinePlayer beingTracked = teammates.get(teammateIndex);
+        if (!beingTracked.isOnline()) {
+            Notifications.sendTeammateTrackingError(tracking, "Teammate is offline. Right click to select next!");
+            return;
+        }
+        Player beingTrackedPlayer = beingTracked.get();
+        double distance;
+        try {
+            distance = trackingPlayer.getLocation().distance(beingTrackedPlayer.getLocation());
+        } catch (IllegalArgumentException ex) {
+            Notifications.sendTeammateTrackingError(tracking, "Teammate is in another dimension!");
+            return;
+        }
+        Notifications.sendTeammateTrackingStatus(tracking, beingTrackedPlayer.getName(), isRunner, distance);
     }
 
     private void updateTabList(long elapsedTime) {
@@ -273,6 +325,10 @@ public class Game implements Listener {
 
     public void giveTrackerTo(OptionalOnlinePlayer p) {
         p.run(player -> player.getInventory().addItem(TRACKER_ITEM));
+    }
+
+    public void giveTeamTrackerTo(OptionalOnlinePlayer p) {
+        p.run(player -> player.getInventory().addItem(TEAM_TRACKER_ITEM));
     }
 
     private void processPlayerDeath(OptionalOnlinePlayer p, Player killer) {
@@ -356,7 +412,8 @@ public class Game implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         OptionalOnlinePlayer p = OptionalOnlinePlayer.of(event.getEntity());
         if (!isParticipant(p)) return;
-        Predicate<ItemStack> isTracker = item -> ItemUtils.containsTag(item, TRACKER_TAG);
+        Predicate<ItemStack> isTracker = item ->
+                ItemUtils.containsTag(item, TRACKER_TAG) || ItemUtils.containsTag(item, TEAM_TRACKER_TAG);
         ItemUtils.removeIf(event.getEntity().getInventory(), isTracker);
         event.getDrops().removeIf(isTracker);
         if (isHunter(p) && gameSettings.get(GameSetting.HUNTER_KEEP_INVENTORY)
@@ -372,6 +429,7 @@ public class Game implements Listener {
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         OptionalOnlinePlayer p = OptionalOnlinePlayer.of(event.getPlayer());
         if (isHunter(p)) giveTrackerTo(p);
+        receivedFirstFallDamage.remove(p);
     }
 
     @EventHandler
@@ -379,17 +437,24 @@ public class Game implements Listener {
         OptionalOnlinePlayer p = OptionalOnlinePlayer.of(event.getPlayer());
         ItemStack item = event.getItem();
 
+        if (!isParticipant(p)) return;
+        boolean isLeftClick = event.getAction().equals(Action.LEFT_CLICK_AIR)
+                || event.getAction().equals(Action.LEFT_CLICK_BLOCK);
+        boolean isRightClick = event.getAction().equals(Action.RIGHT_CLICK_AIR)
+                || event.getAction().equals(Action.RIGHT_CLICK_BLOCK);
+        if (ItemUtils.containsTag(item, TEAM_TRACKER_TAG) && isRightClick) {
+            advanceTrackedTeammate(p);
+        }
         if (!ItemUtils.containsTag(item, TRACKER_TAG)) return;
         if (!isHunter(p)) {
             Notifications.sendTrackingError(p, "Only hunters can use trackers!");
             return;
         };
-        if (event.getAction().equals(Action.LEFT_CLICK_AIR) || event.getAction().equals(Action.LEFT_CLICK_BLOCK)) {
+        if (isLeftClick) {
             // tracker left click -> cycle to next runner
             advanceTrackedRunner(p);
         }
-        if (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)
-            || event.getAction().equals(Action.LEFT_CLICK_AIR) || event.getAction().equals(Action.LEFT_CLICK_BLOCK)) {
+        if (isLeftClick || isRightClick) {
             // tracker left/right click -> update tracker
             TrackingResult result = trackingStrategy.query(new TrackingRequest(
                     p,
@@ -443,6 +508,15 @@ public class Game implements Listener {
         int currentIndex = runnerTrackingIndexes.getOrDefault(hunter, -1);
         currentIndex = (currentIndex + 1) % runners.size();
         runnerTrackingIndexes.put(hunter, currentIndex);
+    }
+
+    private void advanceTrackedTeammate(OptionalOnlinePlayer participant) {
+        List<OptionalOnlinePlayer> teammates = isRunner(participant) ? runners : hunters;
+        int currentIndex = teammateTrackingIndexes.getOrDefault(participant, -1);
+        do {
+            currentIndex = (currentIndex + 1) % teammates.size();
+        } while (teammates.size() > 1 && teammates.get(currentIndex).equals(participant));
+        teammateTrackingIndexes.put(participant, currentIndex);
     }
 
     private OptionalOnlinePlayer getTrackedRunner(OptionalOnlinePlayer hunter) {
