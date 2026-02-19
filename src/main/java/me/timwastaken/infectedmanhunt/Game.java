@@ -14,13 +14,24 @@ import me.timwastaken.infectedmanhunt.gamelogic.tracking.TrackingRequest;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.TrackingResult;
 import me.timwastaken.infectedmanhunt.ui.Notifications;
 import me.timwastaken.infectedmanhunt.ui.Sounds;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.GameRule;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.damage.DamageSource;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -50,6 +61,33 @@ public class Game implements Listener {
             .appendLore("Left click - Update tracker")
             .appendLore("Right click - Track next runner")
             .build();
+
+    private final ItemStack IRON_INGOT = new ItemStack(Material.IRON_INGOT, 1);
+    private final ItemStack GOLD_INGOT = new ItemStack(Material.GOLD_INGOT, 1);
+    private final ItemStack COPPER_INGOT = new ItemStack(Material.COPPER_INGOT, 1);
+    private final ItemStack IRON_BLOCK = new ItemStack(Material.IRON_BLOCK);
+    private final ItemStack GOLD_BLOCK = new ItemStack(Material.GOLD_BLOCK);
+    private final ItemStack COPPER_BLOCK = new ItemStack(Material.COPPER_BLOCK);
+    private final Map<Material, ItemStack> MOD_BLOCK_DROPS = Map.of(
+            Material.IRON_ORE, IRON_INGOT,
+            Material.DEEPSLATE_IRON_ORE, IRON_INGOT,
+            Material.RAW_IRON_BLOCK, IRON_BLOCK,
+            Material.GOLD_ORE, GOLD_INGOT,
+            Material.DEEPSLATE_GOLD_ORE, GOLD_INGOT,
+            Material.RAW_GOLD_BLOCK, GOLD_BLOCK,
+            Material.COPPER_ORE, COPPER_INGOT,
+            Material.DEEPSLATE_COPPER_ORE, COPPER_INGOT,
+            Material.RAW_COPPER_BLOCK, COPPER_BLOCK
+    );
+    private final Map<Material, Material> MOD_ENTITY_DROPS = Map.of(
+            Material.BEEF, Material.COOKED_BEEF,
+            Material.PORKCHOP, Material.COOKED_PORKCHOP,
+            Material.CHICKEN, Material.COOKED_CHICKEN,
+            Material.MUTTON, Material.COOKED_MUTTON,
+            Material.RABBIT, Material.COOKED_RABBIT,
+            Material.COD, Material.COOKED_COD,
+            Material.SALMON, Material.COOKED_SALMON
+    );
 
     private final SettingsRegistry gameSettings;
     private final PluginResourceManager resourceManager;
@@ -92,9 +130,6 @@ public class Game implements Listener {
     }
 
     private void setupGame(World startWorld) {
-        // TODO: set settings elsewhere
-        gameSettings.set(GameSetting.INFECT_RUNNERS, true);
-
         Team hunterTeam = gameScoreboard.registerNewTeam(HUNTER_TEAM_NAME);
         hunterTeam.setDisplayName(Notifications.getHunterTeamName());
         hunterTeam.setColor(Notifications.getHunterTeamColor());
@@ -112,10 +147,17 @@ public class Game implements Listener {
                 p.setGameMode(GameMode.SURVIVAL);
                 p.getInventory().clear();
                 p.getInventory().setArmorContents(null);
-                p.setHealth(20);
                 p.setFoodLevel(20);
                 p.setSaturation(5);
                 p.getActivePotionEffects().forEach(effect -> p.removePotionEffect(effect.getType()));
+                AttributeInstance maxHealth = p.getAttribute(Attribute.MAX_HEALTH);
+                if (maxHealth != null) {
+                    double maxHealthValue = gameSettings.get(
+                            isRunner(participant) ? GameSetting.RUNNER_MAX_HEALTH : GameSetting.HUNTER_MAX_HEALTH
+                    );
+                    maxHealth.setBaseValue(maxHealthValue);
+                    p.setHealth(maxHealthValue);
+                }
             });
             if (isHunter(participant)) {
                 hunterTeam.addEntry(participant.getName());
@@ -157,7 +199,8 @@ public class Game implements Listener {
 
         started = true;
         resourceManager.registerEventListeners(this, trackingStrategy);
-        WinCondition<?> winCondition = gameSettings.get(GameSetting.RUNNER_WIN_CONDITION).getImplementation();
+        WinCondition<?> winCondition = gameSettings.get(GameSetting.RUNNER_WIN_CONDITION)
+                .getImplementation(player -> isRunner(OptionalOnlinePlayer.of(player)));
         resourceManager.registerEventListener(winCondition);
         winCondition.setCallback(() -> endGame(true));
     }
@@ -362,12 +405,44 @@ public class Game implements Listener {
         }
     }
 
-    private OptionalOnlinePlayer advanceTrackedRunner(OptionalOnlinePlayer hunter) throws InfectedManhuntException {
+    @EventHandler
+    public void onDrop(BlockBreakEvent event) {
+        OptionalOnlinePlayer p = OptionalOnlinePlayer.of(event.getPlayer().getUniqueId());
+        if (!isParticipant(p)) return;
+        if (!gameSettings.get(GameSetting.RUNNER_DROP_SMELTED_ORES) && isRunner(p)
+            || !gameSettings.get(GameSetting.HUNTER_DROP_SMELTED_ORES) && isHunter(p)) return;
+        if (!MOD_BLOCK_DROPS.containsKey(event.getBlock().getType())) return;
+        event.setDropItems(false);
+        final ItemStack modified = MOD_BLOCK_DROPS.get(event.getBlock().getType());
+        event.getBlock().getWorld().dropItemNaturally(
+                event.getBlock().getLocation().add(0.5, 0.5, 0.5),
+                modified
+        );
+    }
+
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        if (!(event.getDamageSource().getCausingEntity() instanceof Player causing)) return;
+        OptionalOnlinePlayer p = OptionalOnlinePlayer.of(causing);
+        if (!isParticipant(p)) return;
+        if (!gameSettings.get(GameSetting.RUNNER_DROP_COOKED_FOOD) && isRunner(p)
+            || !gameSettings.get(GameSetting.HUNTER_DROP_COOKED_FOOD) && isHunter(p)) return;
+
+        ListIterator<ItemStack> dropIterator = event.getDrops().listIterator();
+        while (dropIterator.hasNext()) {
+            ItemStack drop = dropIterator.next();
+            Material cookedType = MOD_ENTITY_DROPS.get(drop.getType());
+            if (cookedType == null) continue;
+            ItemStack cookedDrop = new ItemStack(cookedType, drop.getAmount());
+            dropIterator.set(cookedDrop);
+        }
+    }
+
+    private void advanceTrackedRunner(OptionalOnlinePlayer hunter) throws InfectedManhuntException {
         if (runners.isEmpty()) throw new InfectedManhuntException("No runners left!");
         int currentIndex = runnerTrackingIndexes.getOrDefault(hunter, -1);
         currentIndex = (currentIndex + 1) % runners.size();
         runnerTrackingIndexes.put(hunter, currentIndex);
-        return runners.get(currentIndex);
     }
 
     private OptionalOnlinePlayer getTrackedRunner(OptionalOnlinePlayer hunter) {

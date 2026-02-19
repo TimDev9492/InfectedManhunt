@@ -28,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -72,12 +73,30 @@ public class GoCommand {
                 3,
                 true
         );
-        List<WinCondition.Registry> conditions = List.of(WinCondition.Registry.KILL_ENDER_DRAGON);
+        List<WinCondition.Registry> conditions = List.of(
+                WinCondition.Registry.KILL_ENDER_DRAGON,
+                WinCondition.Registry.ADVANCEMENT_UNEASY_ALLIANCE,
+                WinCondition.Registry.ADVANCEMENT_CURE_ZOMBIE_VILLAGER,
+                WinCondition.Registry.ADVANCEMENT_UNLOCK_OMINOUS_VAULT,
+                WinCondition.Registry.ADVANCEMENT_PLAY_MUSIC_DISC_IN_MEADOWS
+        );
         CycleItem winCondition = new CycleItem(
-                1,
-                List.of(Material.DRAGON_EGG),
+                5,
+                List.of(
+                        Material.DRAGON_EGG,
+                        Material.GHAST_TEAR,
+                        Material.GOLDEN_APPLE,
+                        Material.OMINOUS_BOTTLE,
+                        Material.JUKEBOX
+                ),
                 String.format("%s%sWin Condition", ChatColor.LIGHT_PURPLE, ChatColor.BOLD),
-                List.of("Kill the ender dragon")
+                List.of(
+                        "Kill the Ender Dragon",
+                        "Rescue a Ghast from the Nether, bring it safely to the Overworld... and then kill it",
+                        "Weaken and then cure a Zombie Villager",
+                        "Unlock an Ominous Vault with an Ominous Trial Key",
+                        "Play a music disc inside a jukebox in the meadows biome"
+                )
         );
         Items.RangeSelect headstartSeconds = new Items.RangeSelect(
                 Material.COBWEB,
@@ -123,16 +142,106 @@ public class GoCommand {
                     return false;
                 }
         );
+        List<Consumer<SettingsRegistry>> configureCookedFood = List.of(
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_COOKED_FOOD, false);
+                    reg.set(GameSetting.HUNTER_DROP_COOKED_FOOD, false);
+                },
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_COOKED_FOOD, true);
+                    reg.set(GameSetting.HUNTER_DROP_COOKED_FOOD, false);
+                },
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_COOKED_FOOD, false);
+                    reg.set(GameSetting.HUNTER_DROP_COOKED_FOOD, true);
+                },
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_COOKED_FOOD, true);
+                    reg.set(GameSetting.HUNTER_DROP_COOKED_FOOD, true);
+                }
+        );
+        CycleItem dropCookedFood = new CycleItem(
+                4,
+                List.of(
+                        Material.BEEF,
+                        Material.COOKED_COD,
+                        Material.COOKED_PORKCHOP,
+                        Material.COOKED_BEEF
+                ),
+                String.format("%s%sDrop Cooked Food", ChatColor.GOLD, ChatColor.BOLD),
+                List.of(
+                        String.format("%sDisabled", ChatColor.RED),
+                        String.format("%sRunners Only", Notifications.getRunnerTeamColor()),
+                        String.format("%sHunters Only", Notifications.getHunterTeamColor()),
+                        String.format("%sAlways", ChatColor.GREEN)
+                )
+        );
+        List<Consumer<SettingsRegistry>> configureSmeltedOres = List.of(
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_SMELTED_ORES, false);
+                    reg.set(GameSetting.HUNTER_DROP_SMELTED_ORES, false);
+                },
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_SMELTED_ORES, true);
+                    reg.set(GameSetting.HUNTER_DROP_SMELTED_ORES, false);
+                },
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_SMELTED_ORES, false);
+                    reg.set(GameSetting.HUNTER_DROP_SMELTED_ORES, true);
+                },
+                reg -> {
+                    reg.set(GameSetting.RUNNER_DROP_SMELTED_ORES, true);
+                    reg.set(GameSetting.HUNTER_DROP_SMELTED_ORES, true);
+                }
+        );
+        CycleItem dropSmeltedOres = new CycleItem(
+                4,
+                List.of(
+                        Material.RAW_IRON,
+                        Material.IRON_INGOT,
+                        Material.COPPER_INGOT,
+                        Material.BLAST_FURNACE
+                ),
+                String.format("%s%sDrop Smelted Ores", ChatColor.GOLD, ChatColor.BOLD),
+                List.of(
+                        String.format("%sDisabled", ChatColor.RED),
+                        String.format("%sRunners Only", Notifications.getRunnerTeamColor()),
+                        String.format("%sHunters Only", Notifications.getHunterTeamColor()),
+                        String.format("%sAlways", ChatColor.GREEN)
+                )
+        );
+        Items.RangeSelect runnerMaxHealth = new Items.RangeSelect(
+                Material.ENCHANTED_GOLDEN_APPLE,
+                String.format("%s%sRunner Health", Notifications.getRunnerTeamColor(), ChatColor.BOLD),
+                "The amount of health runners have (20HP=10×❤).",
+                20,
+                1,
+                Integer.MAX_VALUE,
+                1,
+                5
+        );
+        Items.RangeSelect hunterMaxHealth = new Items.RangeSelect(
+                Material.ENCHANTED_GOLDEN_APPLE,
+                String.format("%s%sHunter Health", Notifications.getHunterTeamColor(), ChatColor.BOLD),
+                "The amount of health hunters have (20HP=10×❤).",
+                20,
+                1,
+                Integer.MAX_VALUE,
+                1,
+                5
+        );
         IntertorySection upper = new IntertoryBuilder(9, 3)
-                .withItem(1, 1, infectRunners)
-                .withItem(2, 1, runnerKeepInventory)
-                .withItem(3, 1, hunterKeepInventory)
-                .withItem(4, 1, runnerLives)
-                .withItem(5, 1, winCondition)
-                .withItem(6, 1, headstartSeconds)
-                .withItem(7, 1, trackingStrategy)
-//                .withItem(8, 0, cancelButton)
-//                .withItem(8, 3, confirmButton)
+                .withItem(1, 0, infectRunners)
+                .withItem(2, 0, runnerKeepInventory)
+                .withItem(3, 0, hunterKeepInventory)
+                .withItem(4, 0, runnerLives)
+                .withItem(5, 0, winCondition)
+                .withItem(6, 0, headstartSeconds)
+                .withItem(7, 0, trackingStrategy)
+                .withItem(1, 1, dropCookedFood)
+                .withItem(3, 1, dropSmeltedOres)
+                .withItem(5, 1, runnerMaxHealth)
+                .withItem(7, 1, hunterMaxHealth)
                 .withBackground(Material.GRAY_STAINED_GLASS_PANE)
                 .getSection();
         IntertoryBuilder lowerBuilder = new IntertoryBuilder(9, 3);
@@ -184,6 +293,10 @@ public class GoCommand {
                     registry.set(GameSetting.RUNNER_LIVES, runnerLives.getState());
                     registry.set(GameSetting.RUNNER_WIN_CONDITION, conditions.get(winCondition.getState()));
                     registry.set(GameSetting.RUNNER_HEADSTART_SECONDS, headstartSeconds.getValue());
+                    registry.set(GameSetting.RUNNER_MAX_HEALTH, runnerMaxHealth.getValue());
+                    registry.set(GameSetting.HUNTER_MAX_HEALTH, hunterMaxHealth.getValue());
+                    configureCookedFood.get(dropCookedFood.getState()).accept(registry);
+                    configureSmeltedOres.get(dropSmeltedOres.getState()).accept(registry);
                     builder.setTrackingStrategy(trackingStrategies.get(trackingStrategy.getState()).get());
                     builder.setWorld(player.getWorld());
                     builder.setSettings(registry);

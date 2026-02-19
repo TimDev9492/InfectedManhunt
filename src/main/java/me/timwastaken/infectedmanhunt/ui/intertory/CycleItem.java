@@ -24,7 +24,7 @@ public class CycleItem extends Items.ItemWithState<Integer> {
                     if (type.isLeftClick()) increment = 1;
                     if (type.isRightClick()) increment = -1;
                     return new AbstractMap.SimpleEntry<>(
-                            (state + increment) % numStates,
+                            (state + increment + numStates) % numStates,
                             increment == 0 ? ItemAction.GENERIC_FAIL : (
                                     increment == 1 ? ItemAction.SMALL_INCREMENT
                                             : ItemAction.SMALL_DECREMENT

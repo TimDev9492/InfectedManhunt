@@ -2,8 +2,8 @@
 
 key_file="/home/tim/.ssh/id_ed25519_netcup"
 host="chopin@netcup"
-destination="/home/chopin/minecraft/servers/plugin-dev/plugins"
-screen_session_name="minecraft-server-plugin-dev"
+destination="/home/chopin/minecraft/servers/manhunt-revisited/plugins"
+screen_session_name="minecraft-server-manhunt-revisited"
 
 # $1 - the path to the jar file
 if [ -z "$1" ]; then echo "No jar file provided!"; exit 1; fi

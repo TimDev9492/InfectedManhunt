@@ -9,8 +9,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-
 public class Notifications {
     private static final String PREFIX = String.format(
             "[%sInfectedManhunt%s] ",
