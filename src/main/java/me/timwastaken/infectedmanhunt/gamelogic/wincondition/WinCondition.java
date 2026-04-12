@@ -1,13 +1,11 @@
 package me.timwastaken.infectedmanhunt.gamelogic.wincondition;
 
-import me.timwastaken.infectedmanhunt.Game;
+import me.timwastaken.infectedmanhunt.serialization.RegistryEnum;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.RegisteredServiceProvider;
 
-import java.util.Locale;
 import java.util.function.Predicate;
 
 public abstract class WinCondition<T extends Event> implements Listener {
@@ -27,7 +25,7 @@ public abstract class WinCondition<T extends Event> implements Listener {
         WinCondition<? extends Event> provide(Predicate<Player> runnerCheck);
     }
 
-    public enum Registry {
+    public enum Registry implements RegistryEnum {
         KILL_ENDER_DRAGON(_check -> new KillEnderDragonCondition()),
         ADVANCEMENT_UNEASY_ALLIANCE(check -> new AdvancementCondition(
                 NamespacedKey.minecraft("nether/uneasy_alliance"),

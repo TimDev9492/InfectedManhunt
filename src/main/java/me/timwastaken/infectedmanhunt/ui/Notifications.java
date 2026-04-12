@@ -9,6 +9,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.List;
+
 public class Notifications {
     private static final String PREFIX = String.format(
             "[%sInfectedManhunt%s] ",
@@ -57,6 +59,10 @@ public class Notifications {
 
     public static void errorGameIsRunning(CommandSender target) {
         errorChat(target, "The game is already running.");
+    }
+
+    public static void errorGameIsNotRunning(CommandSender target) {
+        errorChat(target, "The game is not running.");
     }
 
     private static String asError(String error) {
@@ -291,5 +297,35 @@ public class Notifications {
                 ChatColor.GRAY,
                 presetDescription
         )));
+    }
+
+    public static String getPresetDescriptionLine(String preset, String description) {
+        return String.format(
+                "%s%s: %s%s",
+                ChatColor.YELLOW,
+                preset,
+                ChatColor.GRAY,
+                description
+        );
+    }
+
+    public static void sendPresetSaved(CommandSender sender, String preset) {
+        sender.sendMessage(withPrefix(String.format(
+                "%sSuccessfully saved preset: %s%s",
+                ChatColor.GREEN,
+                ChatColor.GRAY,
+                preset
+        )));
+    }
+
+    public static void errorSavingPreset(CommandSender target, String presetName) {
+        errorChat(target, String.format("Failed to save preset %s%s", ChatColor.ITALIC, presetName));
+    }
+
+    public static void sendPresetList(CommandSender sender, List<String> presetLines) {
+        sender.sendMessage(withPrefix("Available presets:"));
+        for (String line : presetLines) {
+            sender.sendMessage(line);
+        }
     }
 }

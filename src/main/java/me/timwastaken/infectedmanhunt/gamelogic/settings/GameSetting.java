@@ -1,6 +1,8 @@
 package me.timwastaken.infectedmanhunt.gamelogic.settings;
 
+import me.timwastaken.infectedmanhunt.gamelogic.tracking.PlayerTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.wincondition.WinCondition;
+import me.timwastaken.infectedmanhunt.serialization.RegistryEnum;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -16,16 +18,17 @@ public record GameSetting<T>(String identifier, T fallback, Class<T> type) {
         return new GameSetting<>(id, def, Boolean.class);
     }
 
-    private static GameSetting<WinCondition.Registry> condition(String id, WinCondition.Registry def) {
-        return new GameSetting<>(id, def, WinCondition.Registry.class);
+    private static <T extends RegistryEnum> GameSetting<T> registryValue(String id, T def, Class<T> clazz) {
+        return new GameSetting<>(id, def, clazz);
     }
 
     public static final GameSetting<Boolean> INFECT_RUNNERS = GameSetting.bool("infect_runners", true);
     public static final GameSetting<Boolean> RUNNER_KEEP_INVENTORY = GameSetting.bool("runner_keep_inv", true);
     public static final GameSetting<Boolean> HUNTER_KEEP_INVENTORY = GameSetting.bool("hunter_keep_inv", false);
     public static final GameSetting<Integer> RUNNER_LIVES = GameSetting.integer("runner_lives", 1);
-    public static final GameSetting<WinCondition.Registry> RUNNER_WIN_CONDITION = GameSetting.condition("win_condition", WinCondition.Registry.KILL_ENDER_DRAGON);
+    public static final GameSetting<WinCondition.Registry> RUNNER_WIN_CONDITION = GameSetting.registryValue("win_condition", WinCondition.Registry.KILL_ENDER_DRAGON, WinCondition.Registry.class);
     public static final GameSetting<Integer> RUNNER_HEADSTART_SECONDS = GameSetting.integer("runner_headstart", 0);
+    public static final GameSetting<PlayerTrackingStrategy.Registry> TRACKING_STRATEGY = GameSetting.registryValue("tracking_strategy", PlayerTrackingStrategy.Registry.LAZY, PlayerTrackingStrategy.Registry.class);
     public static final GameSetting<Boolean> RUNNER_DROP_COOKED_FOOD = GameSetting.bool("runner_drop_cooked_food", false);
     public static final GameSetting<Boolean> HUNTER_DROP_COOKED_FOOD = GameSetting.bool("hunter_drop_cooked_food", false);
     public static final GameSetting<Boolean> RUNNER_DROP_SMELTED_ORES = GameSetting.bool("runner_drop_smelted_ores", false);
@@ -41,6 +44,7 @@ public record GameSetting<T>(String identifier, T fallback, Class<T> type) {
                 RUNNER_LIVES,
                 RUNNER_WIN_CONDITION,
                 RUNNER_HEADSTART_SECONDS,
+                TRACKING_STRATEGY,
                 RUNNER_DROP_COOKED_FOOD,
                 HUNTER_DROP_COOKED_FOOD,
                 RUNNER_DROP_SMELTED_ORES,

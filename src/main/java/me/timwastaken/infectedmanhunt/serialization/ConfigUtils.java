@@ -1,5 +1,6 @@
 package me.timwastaken.infectedmanhunt.serialization;
 
+import me.timwastaken.infectedmanhunt.exceptions.InfectedManhuntException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -36,8 +37,18 @@ public class ConfigUtils {
     public FileConfiguration getConfig(String preset) {
         File configFile = presetToFile(preset);
         if (!configFile.exists()) return null;
-        FileConfiguration config = YamlConfiguration.loadConfiguration(presetToFile(preset));
+        FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
         if (!isPresetConfiguration(config)) return null;
+        return config;
+    }
+
+    public FileConfiguration newPreset(String preset, String description) {
+        File configFile = presetToFile(preset);
+        if (configFile.exists()) throw new InfectedManhuntException(
+                String.format("Preset '%s' already exists.", preset)
+        );
+        FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+        config.set(DESCRIPTION_KEY, description);
         return config;
     }
 

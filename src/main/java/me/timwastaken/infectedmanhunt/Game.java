@@ -6,10 +6,10 @@ import me.timwastaken.infectedmanhunt.common.OptionalOnlinePlayer;
 import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
 import me.timwastaken.infectedmanhunt.common.Utils;
 import me.timwastaken.infectedmanhunt.exceptions.InfectedManhuntException;
+import me.timwastaken.infectedmanhunt.gamelogic.tracking.PlayerTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.wincondition.WinCondition;
 import me.timwastaken.infectedmanhunt.gamelogic.settings.GameSetting;
 import me.timwastaken.infectedmanhunt.gamelogic.settings.SettingsRegistry;
-import me.timwastaken.infectedmanhunt.gamelogic.tracking.IPlayerTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.TrackingRequest;
 import me.timwastaken.infectedmanhunt.gamelogic.tracking.TrackingResult;
 import me.timwastaken.infectedmanhunt.ui.Notifications;
@@ -97,7 +97,7 @@ public class Game implements Listener {
 
     private final SettingsRegistry gameSettings;
     private final PluginResourceManager resourceManager;
-    private final IPlayerTrackingStrategy trackingStrategy;
+    private final PlayerTrackingStrategy trackingStrategy;
     private final Map<OptionalOnlinePlayer, Integer> runnerTrackingIndexes;
     private final Map<OptionalOnlinePlayer, Integer> teammateTrackingIndexes;
 
@@ -118,14 +118,13 @@ public class Game implements Listener {
             PluginResourceManager resourceManager,
             Set<OptionalOnlinePlayer> hunters,
             Set<OptionalOnlinePlayer> runners,
-            IPlayerTrackingStrategy trackingStrategy,
             SettingsRegistry gameSettings
     ) {
         this.gameSettings = gameSettings;
         this.resourceManager = resourceManager;
         this.hunters = new ArrayList<>(hunters);
         this.runners = new ArrayList<>(runners);
-        this.trackingStrategy = trackingStrategy;
+        this.trackingStrategy = gameSettings.get(GameSetting.TRACKING_STRATEGY).getImplementation(resourceManager);
         this.runnerTrackingIndexes = new HashMap<>();
         this.teammateTrackingIndexes = new HashMap<>();
         this.receivedFirstFallDamage = new HashSet<>();
@@ -538,12 +537,16 @@ public class Game implements Listener {
         return started;
     }
 
+    public SettingsRegistry getSettings() {
+        return gameSettings;
+    }
+
     public static class Builder {
         private final PluginResourceManager resourceManager;
         private final Set<OptionalOnlinePlayer> hunters;
         private final Set<OptionalOnlinePlayer> runners;
         private World world;
-        private IPlayerTrackingStrategy trackingStrategy;
+        private PlayerTrackingStrategy trackingStrategy;
         private SettingsRegistry settingsRegistry;
 
         public Builder(PluginResourceManager resourceManager) {
@@ -604,7 +607,7 @@ public class Game implements Listener {
             return this;
         }
 
-        public Builder setTrackingStrategy(IPlayerTrackingStrategy strategy) {
+        public Builder setTrackingStrategy(PlayerTrackingStrategy strategy) {
             trackingStrategy = strategy;
             return this;
         }
@@ -615,7 +618,6 @@ public class Game implements Listener {
                     resourceManager,
                     hunters,
                     runners,
-                    trackingStrategy,
                     settingsRegistry
             );
         }

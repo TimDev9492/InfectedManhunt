@@ -9,6 +9,14 @@ import org.bukkit.util.Vector;
 import java.util.List;
 
 public class Utils {
+    public static int encodeRunnerHunterToggles(boolean includeRunners, boolean includeHunters) {
+        if (!includeRunners && !includeHunters) return 0;
+        if (includeRunners && !includeHunters) return 1;
+        if (!includeRunners && includeHunters) return 2;
+        if (includeRunners && includeHunters) return 3;
+        return -1;
+    }
+
     public static Location constructCircle(Location center, Material dot, Material fill, double radius) {
         World world = center.getWorld();
         if (world == null) return null;

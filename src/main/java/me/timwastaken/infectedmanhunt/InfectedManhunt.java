@@ -32,7 +32,7 @@ public final class InfectedManhunt extends JavaPlugin {
                 .commands(
                         new GameCommand(resourceManager),
                         new TrackerCommand(resourceManager),
-                        new ConfigureGameCommand(new Game.Builder(resourceManager), presetLoader),
+                        new ConfigureGameCommand(resourceManager, presetLoader),
                         new GoCommand(resourceManager)
                 )
                 .invalidUsage(new UsageHandler())

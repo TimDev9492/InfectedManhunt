@@ -12,13 +12,14 @@ import java.util.List;
 
 public class CycleItem extends Items.ItemWithState<Integer> {
     public CycleItem(
+            int initial,
             int numStates,
             List<Material> stateMaterials,
             String title,
             List<String> descriptions
     ) {
         super(
-                0,
+                initial,
                 (state, type) -> {
                     int increment = 0;
                     if (type.isLeftClick()) increment = 1;

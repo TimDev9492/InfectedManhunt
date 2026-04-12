@@ -7,7 +7,7 @@ import org.bukkit.inventory.meta.CompassMeta;
 
 import java.util.Objects;
 
-public class LazyPlayerTrackingStrategy implements IPlayerTrackingStrategy {
+public class LazyPlayerTrackingStrategy extends PlayerTrackingStrategy {
     @Override
     public TrackingResult query(TrackingRequest request) {
         if (!request.tracking().isOnline()) throw new IllegalStateException(

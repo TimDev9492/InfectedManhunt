@@ -10,11 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Repeat the last query every tick.
  */
-public class ContinuousTrackingStrategy implements IPlayerTrackingStrategy {
-    private final IPlayerTrackingStrategy childStrategy;
+public class ContinuousTrackingStrategy extends PlayerTrackingStrategy {
+    private final PlayerTrackingStrategy childStrategy;
     private final Map<OptionalOnlinePlayer, TrackingRequest> latestRequests;
 
-    public ContinuousTrackingStrategy(PluginResourceManager resourceManager, IPlayerTrackingStrategy childStrategy) {
+    public ContinuousTrackingStrategy(PluginResourceManager resourceManager, PlayerTrackingStrategy childStrategy) {
         this.childStrategy = childStrategy;
         this.latestRequests = new ConcurrentHashMap<>();
         resourceManager.registerEventListener(childStrategy);

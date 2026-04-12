@@ -1,12 +1,22 @@
 package me.timwastaken.infectedmanhunt.gamelogic.settings;
 
+import me.timwastaken.infectedmanhunt.gamelogic.tracking.PlayerTrackingStrategy;
 import me.timwastaken.infectedmanhunt.gamelogic.wincondition.WinCondition;
+import me.timwastaken.infectedmanhunt.serialization.RegistryEnum;
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SettingsRegistry {
+    private static final List<Class<? extends Enum<? extends RegistryEnum>>> REGISTRY_CLASSES = List.of(
+            WinCondition.Registry.class,
+            PlayerTrackingStrategy.Registry.class
+    );
+
     private final Map<String, Object> settings;
 
     public static SettingsRegistry getDefaultRegistry() {
@@ -36,12 +46,12 @@ public class SettingsRegistry {
     }
 
     public void saveTo(ConfigurationSection section) {
-        for (Map.Entry<String, Object> regEntry : settings.entrySet()) {
-            Object value = regEntry.getValue();
-            if (value instanceof WinCondition.Registry conditionEntry) {
-                section.set(regEntry.getKey(), conditionEntry.identifier());
+        for (GameSetting<?> setting : GameSetting.all()) {
+            Object value = get(setting);
+            if (value instanceof RegistryEnum conditionEntry) {
+                section.set(setting.identifier(), conditionEntry.identifier());
             } else {
-                section.set(regEntry.getKey(), value);
+                section.set(setting.identifier(), value);
             }
         }
     }
@@ -50,8 +60,21 @@ public class SettingsRegistry {
         Map<String, Object> loaded = new HashMap<>();
         for (String key : section.getKeys(false)) {
             Object value = section.get(key);
-            if (value instanceof String conditionId && WinCondition.Registry.fromIdentifier(conditionId) != null) {
-                loaded.put(key, WinCondition.Registry.fromIdentifier(conditionId));
+            if (value instanceof String registryKey) {
+                boolean isRegistry = false;
+                for (Class<? extends Enum<? extends RegistryEnum>> registryClass : REGISTRY_CLASSES) {
+                    try {
+                        Method regEntryFromId = registryClass.getMethod("fromIdentifier", String.class);
+                        Object regEntry = regEntryFromId.invoke(null, registryKey);
+                        if (regEntry == null) continue;
+                        loaded.put(key, regEntry);
+                        isRegistry = true;
+                        break;
+                    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                        throw new IllegalStateException("Registry classes MUST include method fromIdentifier");
+                    }
+                }
+                if (!isRegistry) loaded.put(key, registryKey);
             } else {
                 loaded.put(key, section.get(key));
             }

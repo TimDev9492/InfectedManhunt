@@ -1,17 +1,16 @@
 package me.timwastaken.infectedmanhunt.commands;
 
+import dev.rollczi.litecommands.annotations.argument.Arg;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
 import me.timwastaken.infectedmanhunt.Game;
 import me.timwastaken.infectedmanhunt.common.OptionalOnlinePlayer;
 import me.timwastaken.infectedmanhunt.common.PluginResourceManager;
+import me.timwastaken.infectedmanhunt.common.Utils;
 import me.timwastaken.infectedmanhunt.gamelogic.settings.GameSetting;
 import me.timwastaken.infectedmanhunt.gamelogic.settings.SettingsRegistry;
-import me.timwastaken.infectedmanhunt.gamelogic.tracking.ContinuousTrackingStrategy;
-import me.timwastaken.infectedmanhunt.gamelogic.tracking.IPlayerTrackingStrategy;
-import me.timwastaken.infectedmanhunt.gamelogic.tracking.LazyPlayerTrackingStrategy;
-import me.timwastaken.infectedmanhunt.gamelogic.tracking.PortalEntranceTrackingStrategy;
+import me.timwastaken.infectedmanhunt.gamelogic.tracking.*;
 import me.timwastaken.infectedmanhunt.gamelogic.wincondition.WinCondition;
 import me.timwastaken.infectedmanhunt.ui.Notifications;
 import me.timwastaken.infectedmanhunt.ui.intertory.CycleItem;
@@ -25,6 +24,7 @@ import me.timwastaken.intertoryapi.utils.ItemBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -41,8 +41,9 @@ public class GoCommand {
     }
 
     @Execute
-    public void execute(@Context Player player) {
-        SettingsRegistry registry = SettingsRegistry.getDefaultRegistry();
+    public void execute(@Context Player player, @Arg Optional<ConfigurationSection> preset) {
+        SettingsRegistry registry = preset.map(SettingsRegistry::fromConfig)
+                .orElse(SettingsRegistry.getDefaultRegistry());
 
         Items.ToggleState infectRunners = new Items.ToggleState(
                 Material.ZOMBIE_HEAD,
@@ -81,6 +82,7 @@ public class GoCommand {
                 WinCondition.Registry.ADVANCEMENT_PLAY_MUSIC_DISC_IN_MEADOWS
         );
         CycleItem winCondition = new CycleItem(
+                Math.max(0, conditions.indexOf(registry.get(GameSetting.RUNNER_WIN_CONDITION))),
                 5,
                 List.of(
                         Material.DRAGON_EGG,
@@ -108,12 +110,13 @@ public class GoCommand {
                 5,
                 30
         );
-        List<Supplier<IPlayerTrackingStrategy>> trackingStrategies = List.of(
-                LazyPlayerTrackingStrategy::new,
-                PortalEntranceTrackingStrategy::new,
-                () -> new ContinuousTrackingStrategy(resourceManager, new PortalEntranceTrackingStrategy())
+        List<PlayerTrackingStrategy.Registry> trackingStrategies = List.of(
+                PlayerTrackingStrategy.Registry.LAZY,
+                PlayerTrackingStrategy.Registry.PORTAL,
+                PlayerTrackingStrategy.Registry.AUTO_UPDATE
         );
         CycleItem trackingStrategy = new CycleItem(
+                Math.max(0, trackingStrategies.indexOf(registry.get(GameSetting.TRACKING_STRATEGY))),
                 3,
                 List.of(Material.COMPASS, Material.RECOVERY_COMPASS, Material.CALIBRATED_SCULK_SENSOR),
                 String.format("%s%sTracker Behavior", ChatColor.BLUE, ChatColor.BOLD),
@@ -161,6 +164,10 @@ public class GoCommand {
                 }
         );
         CycleItem dropCookedFood = new CycleItem(
+                Math.max(0, Utils.encodeRunnerHunterToggles(
+                        registry.get(GameSetting.RUNNER_DROP_COOKED_FOOD),
+                        registry.get(GameSetting.HUNTER_DROP_COOKED_FOOD)
+                )),
                 4,
                 List.of(
                         Material.BEEF,
@@ -195,6 +202,10 @@ public class GoCommand {
                 }
         );
         CycleItem dropSmeltedOres = new CycleItem(
+                Math.max(0, Utils.encodeRunnerHunterToggles(
+                        registry.get(GameSetting.RUNNER_DROP_SMELTED_ORES),
+                        registry.get(GameSetting.HUNTER_DROP_SMELTED_ORES)
+                )),
                 4,
                 List.of(
                         Material.RAW_IRON,
@@ -293,11 +304,11 @@ public class GoCommand {
                     registry.set(GameSetting.RUNNER_LIVES, runnerLives.getState());
                     registry.set(GameSetting.RUNNER_WIN_CONDITION, conditions.get(winCondition.getState()));
                     registry.set(GameSetting.RUNNER_HEADSTART_SECONDS, headstartSeconds.getValue());
+                    registry.set(GameSetting.TRACKING_STRATEGY, trackingStrategies.get(trackingStrategy.getState()));
                     registry.set(GameSetting.RUNNER_MAX_HEALTH, runnerMaxHealth.getValue());
                     registry.set(GameSetting.HUNTER_MAX_HEALTH, hunterMaxHealth.getValue());
                     configureCookedFood.get(dropCookedFood.getState()).accept(registry);
                     configureSmeltedOres.get(dropSmeltedOres.getState()).accept(registry);
-                    builder.setTrackingStrategy(trackingStrategies.get(trackingStrategy.getState()).get());
                     builder.setWorld(player.getWorld());
                     builder.setSettings(registry);
                     Set<OptionalOnlinePlayer> hunters = Bukkit.getOnlinePlayers()
