@@ -2,7 +2,8 @@
 
 key_file="/home/tim/.ssh/id_ed25519_netcup"
 host="chopin@netcup"
-destination="/home/chopin/minecraft/servers/manhunt-revisited/plugins"
+docker_dir="/opt/docker/minecraft"
+destination="$docker_dir/data/servers/manhunt-revisited/plugins"
 screen_session_name="minecraft-server-manhunt-revisited"
 
 # $1 - the path to the jar file
@@ -18,6 +19,6 @@ EOF
 
 # reload the server
 echo "Reloading server..."
-ssh -i "$key_file" "$host" "screen -S \"$screen_session_name\" -p 0 -X stuff \"plugman reload InfectedManhunt\"\`echo -ne '\015'\`"
+ssh -i "$key_file" "$host" "cd \"$docker_dir\" && docker compose exec server-mgr screen -S \"$screen_session_name\" -p 0 -X stuff \"plugman reload InfectedManhunt\"\`echo -ne '\015'\`"
 if [ $? -eq 1 ]; then echo "Failed to reload the server."; exit 0; fi
 echo "Success!"; exit 0
