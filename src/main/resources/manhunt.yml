@@ -1,6 +1,6 @@
-preset_description: Runners become Hunters upon death
+preset_description: The default Manhunt experience
 
-infect_runners: true
+infect_runners: false
 runner_keep_inv: false
 hunter_keep_inv: false
 runner_lives: 1

@@ -1,0 +1,15 @@
+preset_description: Infected Manhunt + auto-cook food + auto-smelt ores
+
+infect_runners: true
+runner_keep_inv: false
+hunter_keep_inv: false
+runner_lives: 1
+win_condition: kill_ender_dragon
+runner_headstart: 0
+tracking_strategy: auto_update
+runner_drop_cooked_food: true
+hunter_drop_cooked_food: true
+runner_drop_smelted_ores: true
+hunter_drop_smelted_ores: true
+runner_max_health: 20
+hunter_max_health: 20

@@ -39,7 +39,9 @@ public final class InfectedManhunt extends JavaPlugin {
                 .argument(ConfigurationSection.class, new PresetArgument(presetLoader))
                 .build();
 
-        saveResource("default.yml", true);
+        saveResource("manhunt.yml", true);
+        saveResource("infected.yml", true);
+        saveResource("fast-infected.yml", true);
     }
 
     @Override
